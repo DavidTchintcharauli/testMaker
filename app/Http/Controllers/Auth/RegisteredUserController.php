@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -46,6 +47,57 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        return redirect()->route('role.selection');
+    }
+
+        /**
+     * Display the role selection view.
+     */
+    public function showRoleSelection(): Response
+    {
+        $teachers = User::whereHas('role', function($query) {
+            $query->where('name', 'teacher');
+        })->get();
+
+        return Inertia::render('Auth/RoleSelection', [
+            'teachers' => $teachers,
+        ]);
+    }
+
+        /**
+     * Handle an incoming role selection request.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function handleRoleSelection(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'role' => 'required|string',
+            'teacher_id' => 'nullable|exists:users,id',
+        ]);
+
+        $user = Auth::user();
+
+        $role = Role::create([
+            'name' => $request->role,
+            'user_id' => $user->id,
+        ]);
+
+        $user->role_id = $role->id;
+        if ($request->role === 'student') {
+            $user->teacher_id = $request->teacher_id;
+        }
+
+        $user->save();
+
+        if ($request->role === 'teacher') {
+            return redirect()->route('student.dashboard');
+        } elseif ($request->role === 'student') {
+            return redirect()->route('student.dashboard');
+        } else {
+            return redirect()->route('dashboard');
+        }
 
         return redirect(RouteServiceProvider::HOME);
     }
