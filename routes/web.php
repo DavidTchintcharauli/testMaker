@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -36,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/teacher-dashboard', function () {
         return Inertia::render('Teacher/Dashboard');
     })->name('teacher.dashboard');
+
+    Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
+    Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
 
     Route::get('/student-dashboard', function () {
         return Inertia::render('Student/Dashboard');
